@@ -11,13 +11,18 @@
         <a href='/join'>join</a>
         <a href='/withdraw'>withdraw</a><br><br>
         <a href='/write'>write</a>
-        <a href='/update/{{id}}'>update</a>
-        <a href='/delete/{{id}}'>delete</a>
+        <a href='/update'>update</a>
+        <a href='/delete'>delete</a>
 
         <h2>{{ title }}</h2>
             {{ message }}   
         <ol>
-            {{ menu | safe }}
-        </ol>        
+            {{ menu | safe}}
+        </ol>     
+        <form action='/write' method='POST'>
+            <p><input type='text' name='title' placeholder='input title' autofocus required></p>
+            <p><textarea name='content' placeholder='input content' required></textarea></p>
+            <p><button type='submit'>write</button></p>
+        </form>  
     </body>
 </html>

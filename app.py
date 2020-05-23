@@ -39,7 +39,7 @@ def get_menu():
         menu_dic=cur.fetchall()
         menu=[]
         for i in menu_dic:
-            menu.append(f"""<li><a href='{i['id']}'>{i['title']}</a></li>""")
+            menu.append(f"""<li><a href='/{i['id']}'>{i['title']}</a></li>""")
         return '\n'.join(menu)
 
 @app.route('/')
@@ -52,6 +52,104 @@ def index():
                             owner=who_am_i(),
                             menu=get_menu(),
                             title=title)
+
+@app.route('/<id>')
+def get_post(id):
+    cur=db.cursor()
+    cur.execute(f"""
+        select id, title, description from topic 
+        where id='{id}'
+    """)
+    content=cur.fetchone()
+
+    return render_template('index.html',
+                            owner=who_am_i(),
+                            menu=get_menu(),
+                            id=content['id'],
+                            title=content['title'],
+                            message=content['description'])
+
+@app.route('/write', methods=['GET','POST'])
+def post_write():
+    if am_i_here() == False:
+        title = "Login 후 사용할 수 있읍니다."
+        return render_template('index.html',
+                            owner=who_am_i(),
+                            menu=get_menu(),
+                            title=title)
+    else:
+        title='게시판 내용을 입력해 주세요.'
+        if request.method =='POST':
+            cur=db.cursor()
+            cur.execute(f"""
+                insert into topic (title, description, created, author_id)
+                values ('{request.form['title']}',
+                        '{request.form['content']}',
+                        '{datetime.now()}',
+                        '{session['user']['id']}')
+            """)
+            db.commit()
+            return redirect('/') 
+    return render_template('write.html',
+                            owner=who_am_i(),
+                            title=title)
+
+@app.route('/delete/')
+def delete_error():
+    if am_i_here() == True:
+        title='Menu 선택후 삭제할 수 있읍니다.'
+    else:
+        title='Login 후 사용할 수 있읍니다.'
+    return render_template('index.html',
+                            owner=who_am_i(),
+                            menu=get_menu(),
+                            title=title)
+
+@app.route('/update/')
+def update_error():
+    if am_i_here() == True:
+        title='Menu 선택후 수정할 수 있읍니다.'
+    else:
+        title='Login 후 사용할 수 있읍니다.'
+    return render_template('index.html',
+                            owner=who_am_i(),
+                            menu=get_menu(),
+                            title=title)
+
+@app.route('/delete/<id>')
+def post_delete(id):
+    cur=db.cursor()
+    cur.execute(f"""
+        delete from topic where id='{id}'
+    """)
+    db.commit()
+    return redirect('/')
+
+@app.route('/update/<id>', methods=['GET','POST'])
+def post_update(id):
+    cur=db.cursor()
+    cur.execute(f"""
+        select id, title, description from topic
+        where id='{id}'
+    """)
+    content=cur.fetchone()
+    if request.method =='POST':
+        cur=db.cursor()
+        cur.execute(f"""
+            update topic set title='{request.form['title']}',
+                            description='{request.form['content']}',
+                            created='{datetime.now()}',
+                            author_id='{session['user']['id']}'
+            where id='{id}'
+        """)
+        db.commit()
+        return redirect('/') 
+    return render_template('update.html',
+                            owner=who_am_i(),
+                            id=content['id'],
+                            title=content['title'],
+                            message=content['description'])
+
 
 @app.route('/login', methods=['GET','POST'])
 def login():
